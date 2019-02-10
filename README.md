@@ -7,5 +7,8 @@ Thanks, Marco!
 
 Please note: full licensing info for CC0 model assets is contained in island.monkey2; they should not be redistributed without meeting CC0 requirements.
 
-![Retro Island Demo Screenshot, normal mode](normal.jpg)
-![Retro Island Demo Screenshot, retro mode](retro.jpg)
+![ZX Spectrum](https://raw.githubusercontent.com/DruggedBunny/Retro-Island/master/screenshots/speccy.jpg)
+![Apple II](https://raw.githubusercontent.com/DruggedBunny/Retro-Island/master/screenshots/appleii.jpg)
+![Aurora 256 palette](https://raw.githubusercontent.com/DruggedBunny/Retro-Island/master/screenshots/aurora256.jpg)
+![Amstrad CPC](https://raw.githubusercontent.com/DruggedBunny/Retro-Island/master/screenshots/amstradcpc.jpg)
+![Game Boy](https://raw.githubusercontent.com/DruggedBunny/Retro-Island/master/screenshots/gameboy.jpg)
