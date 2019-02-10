@@ -27,7 +27,7 @@ Class PlaneBehaviour Extends Behaviour
 		If Not plane_audio
 			plane_audio = Sound.Load ("asset::audio/jet.ogg")
 			plane_audio_channel = plane_audio.Play (True)
-			plane_audio_channel.Volume = 0.5
+			plane_audio_channel.Volume = 0.25 ' 0.5
 			plane_audio_channel.Rate = plane_audio_channel.Rate * 0.05
 		Endif
 		
@@ -67,8 +67,9 @@ Class PlaneBehaviour Extends Behaviour
 	
 	Method OnUpdate (elapsed:Float) Override
 
+		Local pitch_or_roll:Bool = False
+		
 		Entity.RigidBody.ApplyForce (Entity.Basis * New Vec3f (0.0, 0.0, throttle))
-		Entity.RigidBody.ApplyTorque (Entity.Basis * New Vec3f (-Abs (Entity.RollFactor ()) * 85000.0, -Entity.RollFactor () * 25000.0, 0.0))
 		
 		If Keyboard.KeyDown (Key.A)
 			throttle = throttle + 10000.0
@@ -86,18 +87,22 @@ Class PlaneBehaviour Extends Behaviour
 		
 		If Keyboard.KeyDown (Key.Left)
 			Entity.RigidBody.ApplyTorque (Entity.Basis * New Vec3f (0.0, 0.0, roll_torque))
+			pitch_or_roll = True
 		Endif
 
 		If Keyboard.KeyDown (Key.Right)
 			Entity.RigidBody.ApplyTorque (Entity.Basis * New Vec3f (0.0, 0.0, -roll_torque))
+			pitch_or_roll = True
 		Endif
 
 		If Keyboard.KeyDown (Key.Up)
 			Entity.RigidBody.ApplyTorque (Entity.Basis * New Vec3f (pitch_torque, 0.0, 0.0))
+			pitch_or_roll = True
 		Endif
 
 		If Keyboard.KeyDown (Key.Down)
 			Entity.RigidBody.ApplyTorque (Entity.Basis * New Vec3f (-pitch_torque, 0.0, 0.0))
+			pitch_or_roll = True
 		Endif
 
 		If Keyboard.KeyDown (Key.Q)
@@ -106,6 +111,10 @@ Class PlaneBehaviour Extends Behaviour
 		
 		If Keyboard.KeyDown (Key.E)
 			Entity.RigidBody.ApplyTorque (Entity.Basis * New Vec3f (0.0, yaw_torque, 0.0))
+		Endif
+		
+		If Not pitch_or_roll
+			Entity.RigidBody.ApplyTorque (Entity.Basis * New Vec3f (-Abs (Entity.RollFactor ()) * 85000.0, -Entity.RollFactor () * 25000.0, 0.0))
 		Endif
 		
 	End

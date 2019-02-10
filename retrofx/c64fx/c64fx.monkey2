@@ -1,5 +1,5 @@
 
-Class SpectrumFX Extends RetroFX
+Class C64FX Extends RetroFX
 
 	' Params:
 	
@@ -10,9 +10,9 @@ Class SpectrumFX Extends RetroFX
 	' brightness:		Brightness increase/decrease on input image
 	' contrast:			Contrast increase/decrease on input image
 	
-	Method New (width:Int = 256, height:Int = 192, centered:Bool = True, palette_enabled:Bool = True, dither_enabled:Bool = True, brightness:Float = 0.0, contrast:Float = 0.0)
+	Method New (width:Int = 320, height:Int = 200, centered:Bool = True, palette_enabled:Bool = True, dither_enabled:Bool = True, brightness:Float = 0.0, contrast:Float = 0.0)
 
-		Super.New ("ZX Spectrum", width, height, palette_enabled, dither_enabled, centered)
+		Super.New ("C64", width, height, palette_enabled, dither_enabled, centered)
 
 		InitShader (palette_enabled, dither_enabled, brightness, contrast)
 
@@ -24,7 +24,7 @@ Class SpectrumFX Extends RetroFX
 		TargetImage.Material.SetInt		("Dither",			dither_enabled)
 		TargetImage.Material.SetFloat	("Brightness",		brightness)
 		TargetImage.Material.SetFloat	("Contrast",		contrast)
-		TargetImage.Material.SetInt		("PaletteMode",		RetroFXPalette.Spectrum)
+		TargetImage.Material.SetInt		("PaletteMode",		RetroFXPalette.Commodore64)
 
 	End
 	

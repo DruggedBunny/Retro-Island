@@ -1,7 +1,5 @@
 
-// --------------------
-// BOILERPLATE BEGINS!
-// --------------------
+// Scroll down to FRAGMENT_BEGINS!
 
 //@renderpasses 0
 
@@ -28,50 +26,26 @@ void main(){
 
 //@fragment
 
-// --------------------
-// BOILERPLATE ENDS!
-// --------------------
+// ----------------------------------
+// FRAGMENT_BEGINS
+// ----------------------------------
 
-uniform sampler2D m_ImageTexture0;
-
-// m_Toggle is filled-in by image.Material.SetInt ("Toggle", toggle)
-// m_ prefix is automatically added by mojo...
-
-uniform bool m_Toggle;
+uniform sampler2D	m_ImageTexture0;
+uniform bool		m_Toggle;
 
 void main(){
 
-
-
-	// Store "this" pixel's original colour:
-	
-	vec4 color = texture2D(m_ImageTexture0, v_TexCoord0);
-	
-	
-	
-	// Average out the RGB values:
-	
-	float average_rgb = ((color.r + color.g + color.b) * 0.333);
-
-	
-	
-	// Build a new vec4 value with RGB each set to average_rgb, and alpha of 1.0:
-	
-	vec4 bw = vec4(average_rgb, average_rgb, average_rgb, 1.0);
-	
-	
-	
-	// If Toggle = True, set to B & W version of pixel, else draw default.
-	// (gl_FragColor is the resulting pixel colour.)
+	vec4 rgba = texture2D(m_ImageTexture0, v_TexCoord0);
 	
 	if (m_Toggle)
 	{
-		gl_FragColor = bw;
+
+		vec4 new_rgba;
+		
+		// Do stuff to new_rgba...
+		
+		rgba = new_rgba;
+
 	}
-	else
-	{
-		gl_FragColor = color;
-	}
-	
-	
+	gl_FragColor = rgba;
 }

@@ -1,0 +1,3 @@
+Blocked App.Terminate (undefined behaviour) and Notify* from web targets.
+
+* https://github.com/blitz-research/monkey2/issues/460

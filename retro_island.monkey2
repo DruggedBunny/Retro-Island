@@ -1,8 +1,14 @@
 
+' https://github.com/mgzme/MAME-PSGS/blob/master/glsl/mame-psgs_rgb32_dir.fsh
+' https://en.wikipedia.org/wiki/List_of_color_palettes
+' https://en.wikipedia.org/wiki/List_of_8-bit_computer_hardware_palettes
+' https://en.wikipedia.org/wiki/List_of_software_palettes
+' https://en.wikipedia.org/wiki/List_of_videogame_consoles_palettes
+' https://dithermark.com/resources/
+
 ' Next up: Can I apply a shader to model materials and
 ' then use stippling like Spectrum "Fighter Bomber"??
 ' https://youtu.be/KJhPmDWtPhY?t=219
-
 
 ' Model credits at end of source.
 
@@ -17,7 +23,6 @@
 #Import "marker"
 
 #Import "retrofx"
-#Import "retrofx/spectrumfx/spectrumfx"
 
 #Import "assets/"
 
@@ -25,34 +30,38 @@ Using std..
 Using mojo..
 Using mojo3d..
 
+Global FullScreen:Bool = False
+
+Global WindowWidth:Int
+Global WindowHeight:Int
+Global Flags:WindowFlags
+
 Class IslandDemo Extends Window
 
 	' Set this to True for ground self-shadowing on decent desktop PCs:
 	
 	Const GROUND_SHADOWS:Bool		= False
 	
-'	Const WINDOW_WIDTH:Int			= 960
-'	Const WINDOW_HEIGHT:Int			= 540
-'	Const WINDOW_FLAGS:WindowFlags	= WindowFlags.Resizable
-
-	Const WINDOW_WIDTH:Int			= 1920
-	Const WINDOW_HEIGHT:Int			= 1080
-	Const WINDOW_FLAGS:WindowFlags	= WindowFlags.Fullscreen
-
 	Field scene:Scene
 	Field camera:AerialCamera
 	Field plane:PlaneBehaviour
 
 	Field retro_effect:RetroFX
 
+	Field effects:RetroFX []
+	Field selected_effect:Int
+	
 	Field toggle_retro_mode:Bool
-	Field retro_mode:Bool' = True
+	Field retro_mode:Bool
+	Field hide_retro_text:Bool
+
+	Field palette_index:Int ' TMP
 
 	Field store_fps:Float ' Used for un-pausing
 	
-	Method New (title:String = "Island Demo", width:Int = WINDOW_WIDTH, height:Int = WINDOW_HEIGHT, flags:WindowFlags = WINDOW_FLAGS)
+	Method New (title:String = "Retro Island", width:Int = WindowWidth, height:Int = WindowHeight, flags:WindowFlags = Flags)
 		Super.New (title, width, height, flags)
-'		SetConfig( "MOJO3D_RENDERER","forward" )
+		SetConfig( "MOJO3D_RENDERER","forward" )
 	End
 	
 	Method OnCreateWindow () Override
@@ -72,13 +81,15 @@ Class IslandDemo Extends Window
 		
 		Local ground_size:Float					= 4096 * 0.5
 		Local ground_box:Boxf					= New Boxf (-ground_size, -ground_size * 0.5, -ground_size, ground_size, 0, ground_size)
-		Local ground_model:Model				= Model.Load ("asset::model_gltf_6G3x4Sgg6iX_7QCCWe9sgpb\model.gltf")'CreateBox( groundBox,1,1,1,groundMaterial )
+'		Local ground_model:Model				= Model.Load ("asset::untitled.gltf")
+		Local ground_model:Model				= Model.Load ("asset::model_gltf_6G3x4Sgg6iX_7QCCWe9sgpb\model.gltf")
 
 			ground_model.CastsShadow			= GROUND_SHADOWS
 			ground_model.Mesh.FitVertices (ground_box, False)
 			
 			For Local mat:Material = Eachin ground_model.Materials
-				mat.CullMode = CullMode.Back	
+				mat.CullMode = CullMode.Back
+				Cast <PbrMaterial> (mat).MetalnessFactor = 0.0
 			Next
 
 		Local ground_collider:MeshCollider		= ground_model.AddComponent <MeshCollider> ()
@@ -91,13 +102,13 @@ Class IslandDemo Extends Window
 
 		Local mass:Float						= 10954.0
 	
-		Local pitch_rate:Float					= 155000.0 ' TODO: Maybe cancel auto roll-pitch when manually pitching?
-		Local roll_rate:Float					= 550000.0
+		Local pitch_rate:Float					= 175000.0
+		Local roll_rate:Float					= 600000.0
 		Local yaw_rate:Float					= 100000.0
 
 		Local plane_model:Model					= Model.Load ("asset::1397 Jet_gltf_3B3Pa6BHXn1_fKZwaiJPXpf\1397 Jet.gltf")
 
-			plane = New PlaneBehaviour (plane_model, mass, pitch_rate, roll_rate, yaw_rate)
+			plane = New PlaneBehaviour (plane_model, mass, pitch_rate, roll_rate, yaw_rate) ' False = tmp_nosound
 
 		camera									= New AerialCamera (App.ActiveWindow.Rect, Null, 4096)
 		
@@ -110,24 +121,48 @@ Class IslandDemo Extends Window
 		' RETROFX init...
 		' ---------------------------------------------------------------------
 
-		' Params per New method; note that 12.5 used below is constrast tweak *for this specific scene*, which is pale and low-contrast.
+		' Params:	width:Int				[Default: FX-specific, eg. 640]
+		'			height:Int				[Default: FX-specific, eg. 480]
+		'			centered:Bool			[Default: True]
+		'			palette_enabled:Bool	[Default: True]
+		'			dither_enabled:Bool		[Default: True]
+		'			brightness:Float		[Default: 0.0]
+		'			contrast:Float			[Default: 0.0]
 
-		' Method New (width:Int = 256, height:Int = 192, centered:Bool = True, palette_enabled:Bool = True, brightness:Float = 0.0, contrast:Float = 0.0, attribute_clash:Bool = False, grid_size:Float = 8.0)
+		effects = New RetroFX [6]
+
+		effects [0]								= New SpectrumFX	(, , , , , -0.5, 8.5)
+		effects [1]								= New C64FX			(, , , , , -0.5, 8.5)
+		effects [2]								= New AppleIIFX		(, , , , , -0.333, 10.5)
+		effects [3]								= New Aurora256FX	(, , , , , -0.25, 8.5)
+		effects [4]								= New AmstradCPCFX	(, , , , , -0.25, 5.5)
+		effects [5]								= New GBFX			(, , , , , 0.0, 5.5)
 		
-'		retro_effect							= New SpectrumFX (1920, 1080, , , , 12.5, True, 8) ' Attribute clash in a 1080p Speccy!
-		retro_effect							= New SpectrumFX (, , , , , 12.5) ' Contrast adjustment = 12.5 for this scene
+		selected_effect							= 0
+		retro_effect							= effects [selected_effect]
 		
-		' ---------------------------------------------------------------------
+		' Dither testing on random colours...
+		
+'		Local cube:Model = Model.CreateBox (New Boxf (-2.5, -2.5, -2.5, 2.5, 2.5, 2.5), 1, 1, 1, New PbrMaterial (Color.White))
+'		
+'		For Local loop:Int = 1 To 1000
+'			Local cube_copy:Model = cube.Copy ()
+'			cube_copy.Color = Color.Rnd ()
+'			cube_copy.Move (Rnd (-1000, 1000), Rnd (50, 200), Rnd (-1000, 1000))
+'		Next
+
+		scene.Update () ' Avoids crash in AerialCamera.Update if P hit before first update!
+
 	End
 	
 	Method OnMeasure:Vec2i () Override
 
 		If toggle_retro_mode
-			retro_mode	= Not retro_mode	
-			toggle_retro_mode	= False
+			retro_mode					= Not retro_mode
+			toggle_retro_mode			= False
 		Endif
 		
-		If retro_mode
+		If retro_effect And retro_mode
 			camera.RenderCam.View		= Null
 			camera.RenderCam.Viewport	= New Recti (0, 0, retro_effect.TargetImage.Width, retro_effect.TargetImage.Height)
 			Layout						= "letterbox"
@@ -145,7 +180,9 @@ Class IslandDemo Extends Window
 	
 		canvas.TextureFilteringEnabled = False
 
-		If Keyboard.KeyHit (Key.Escape) Then App.Terminate ()
+		#If Not __WEB_TARGET__
+			If Keyboard.KeyHit (Key.Escape) Then App.Terminate ()
+		#Endif
 
 		If Keyboard.KeyDown (Key.Space)
 			If scene.UpdateRate
@@ -153,30 +190,60 @@ Class IslandDemo Extends Window
 			Endif
 		Endif
 
-'		Changing target/shader works! Not tied in to the demo toggles...
-'		If Keyboard.KeyHit (Key.CHANGEME)
-'			retro_effect = New SpectrumFX (1920, 1080, , , , 12.5, True, 8)
-'		Endif
-		
 		If Keyboard.KeyHit (Key.R)
 			toggle_retro_mode = True ' Resolution is changed in OnMeasure
 		Endif
 		
+		
+		If Keyboard.KeyHit (Key.H)
+			If retro_mode
+				hide_retro_text = Not hide_retro_text
+			Endif
+		Endif
+		
+		If Keyboard.KeyHit (Key.P)
+			If scene
+				If scene.UpdateRate
+					store_fps			= scene.UpdateRate
+					scene.UpdateRate	= 0
+				Else
+					scene.UpdateRate	= store_fps
+				Endif
+			Endif
+		Endif
+		
+		If Keyboard.KeyHit (Key.LeftBracket)
+		
+			If retro_mode
+				
+				selected_effect = selected_effect - 1
+				If selected_effect < 0 Then selected_effect = effects.Length - 1
+				
+				retro_effect = effects [selected_effect]
+				
+			Endif
+		
+		Endif
+			
+		If Keyboard.KeyHit (Key.RightBracket)
+		
+			If retro_mode
+			
+				selected_effect = selected_effect + 1
+				If selected_effect > effects.Length - 1 Then selected_effect = 0
+				
+				retro_effect = effects [selected_effect]
+				
+			Endif
+			
+		Endif
+	
 		If Keyboard.KeyHit (Key.O)
 			If retro_mode
 				retro_effect.PaletteToggle = Not retro_effect.PaletteToggle
 			Endif
 		Endif
-		
-		If Keyboard.KeyHit (Key.P)
-			If scene.UpdateRate
-				store_fps			= scene.UpdateRate
-				scene.UpdateRate	= 0
-			Else
-				scene.UpdateRate	= store_fps
-			Endif
-		Endif
-		
+	
 		RequestRender ()
 
 		scene.Update ()
@@ -187,7 +254,7 @@ Class IslandDemo Extends Window
 		' Camera rendering selection:
 		' ---------------------------------------------------------------------
 		
-		If retro_mode
+		If retro_effect And retro_mode
 			
 			' In retro_mode, use RetroFX.Render, passing current camera and canvas...
 			
@@ -212,10 +279,18 @@ Class IslandDemo Extends Window
 			canvas.DrawText ("Toggle retro mode: R", 20, 180)
 			canvas.DrawText ("Pause: P", 20, 200)
 		Else
-			canvas.DrawText ("FPS: " + App.FPS, 20, 0)
-			canvas.DrawText ("T[O]ggle palette: O", 20, 20)
+			If Not hide_retro_text
+				canvas.DrawText ("Mode: " + retro_effect.Name, 20, 0)
+				canvas.DrawText ("Use [ + ] to change", 20, 14)
+				canvas.DrawText ("T[O]ggle palette: O", 20, 28)
+				canvas.DrawText ("Toggle retro mode: R", 20, 42)
+				canvas.DrawText ("Toggle help: H", 20, 56)
+				canvas.DrawText ("FPS: " + App.FPS, 20, 70)
+			Endif
 		Endif
 
+		Title = "FPS: " + App.FPS
+		
 	End
 
 End
@@ -240,6 +315,16 @@ End
 
 Function Main ()
 
+	If FullScreen
+		WindowWidth = 1920
+		WindowHeight = 1080
+		Flags = WindowFlags.Fullscreen
+	Else
+		WindowWidth = 960
+		WindowHeight = 540
+		Flags = WindowFlags.Resizable
+	Endif
+	
 	New AppInstance
 	New IslandDemo
 	

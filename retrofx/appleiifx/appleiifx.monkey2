@@ -1,6 +1,8 @@
 
-Class SpectrumFX Extends RetroFX
+Class AppleIIFX Extends RetroFX
 
+	' Hi-Res mode!
+	
 	' Params:
 	
 	' width/height:		Simulated display size; defaults to 256 x 192 (!) per legit Spectrum
@@ -10,9 +12,9 @@ Class SpectrumFX Extends RetroFX
 	' brightness:		Brightness increase/decrease on input image
 	' contrast:			Contrast increase/decrease on input image
 	
-	Method New (width:Int = 256, height:Int = 192, centered:Bool = True, palette_enabled:Bool = True, dither_enabled:Bool = True, brightness:Float = 0.0, contrast:Float = 0.0)
+	Method New (width:Int = 280, height:Int = 192, centered:Bool = True, palette_enabled:Bool = True, dither_enabled:Bool = True, brightness:Float = 0.0, contrast:Float = 0.0)
 
-		Super.New ("ZX Spectrum", width, height, palette_enabled, dither_enabled, centered)
+		Super.New ("Apple II", width, height, palette_enabled, dither_enabled, centered)
 
 		InitShader (palette_enabled, dither_enabled, brightness, contrast)
 
@@ -24,7 +26,7 @@ Class SpectrumFX Extends RetroFX
 		TargetImage.Material.SetInt		("Dither",			dither_enabled)
 		TargetImage.Material.SetFloat	("Brightness",		brightness)
 		TargetImage.Material.SetFloat	("Contrast",		contrast)
-		TargetImage.Material.SetInt		("PaletteMode",		RetroFXPalette.Spectrum)
+		TargetImage.Material.SetInt		("PaletteMode",		RetroFXPalette.AppleIIHiRes)
 
 	End
 	
